@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:mynotes/firebase_options.dart';
-
+import 'package:mynotes/views/home_page.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -39,7 +39,7 @@ class _RegisterViewState extends State<RegisterView> {
         backgroundColor: Colors.blueAccent,
         titleTextStyle: const TextStyle(
             color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-        iconTheme: const IconThemeData(color: Colors.teal),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 5,
         centerTitle: true,
       ),
@@ -52,7 +52,7 @@ class _RegisterViewState extends State<RegisterView> {
               case ConnectionState.done:
                 return Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 15.0, vertical: 5.0),
+                      horizontal: 15.0, vertical: 15.0),
                   child: Column(
                     children: [
                       TextField(
@@ -130,12 +130,21 @@ class _RegisterViewState extends State<RegisterView> {
       return;
     }
 
-    final userCredential =
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-
-    print(userCredential);
+    try {
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      print(userCredential);
+      if (mounted) {
+        Navigator.of(context)
+            .pushNamedAndRemoveUntil("/home/", (route) => false);
+      }
+    } catch (error) {
+      if (mounted) {
+        _showAlert(context, error.toString());
+      }
+    }
   }
 }

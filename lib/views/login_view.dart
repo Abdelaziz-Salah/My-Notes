@@ -1,8 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:mynotes/firebase_options.dart';
-import 'package:mynotes/main.dart';
+import 'package:mynotes/views/home_page.dart';
+import 'package:mynotes/views/register_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -44,9 +43,10 @@ class _LoginViewState extends State<LoginView> {
         print("There's no user logged in");
       } else {
         print("Logged user: $user");
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
+        if (mounted) {
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil("/home/", (route) => false);
+        }
       }
     });
   }
@@ -59,63 +59,60 @@ class _LoginViewState extends State<LoginView> {
         backgroundColor: Colors.blueAccent,
         titleTextStyle: const TextStyle(
             color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-        iconTheme: const IconThemeData(color: Colors.teal),
         elevation: 5,
         centerTitle: true,
       ),
-      body: FutureBuilder(
-          future: Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.done:
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 15.0, vertical: 15.0),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _email,
-                        decoration: const InputDecoration(
-                            labelText: "Enter your email",
-                            border: OutlineInputBorder()),
-                        keyboardType: TextInputType.emailAddress,
-                        enableSuggestions: false,
-                        autocorrect: false,
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _password,
-                        decoration: const InputDecoration(
-                            labelText: "Enter your password",
-                            border: OutlineInputBorder()),
-                        obscureText: true,
-                        enableSuggestions: false,
-                        autocorrect: false,
-                      ),
-                      const SizedBox(height: 20),
-                      TextButton(
-                        onPressed: () async {
-                          final email = _email.text;
-                          final password = _password.text;
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _email,
+              decoration: const InputDecoration(
+                  labelText: "Enter your email", border: OutlineInputBorder()),
+              keyboardType: TextInputType.emailAddress,
+              enableSuggestions: false,
+              autocorrect: false,
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _password,
+              decoration: const InputDecoration(
+                  labelText: "Enter your password",
+                  border: OutlineInputBorder()),
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () async {
+                final email = _email.text;
+                final password = _password.text;
 
-                          checkLogin(email, password);
-                        },
-                        style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.blueAccent,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 60, vertical: 15)),
-                        child: const Text("Login"),
-                      ),
-                    ],
-                  ),
-                );
-              default:
-                return const Text("Loading....");
-            }
-          }),
+                checkLogin(email, password);
+              },
+              style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blueAccent,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 60, vertical: 15)),
+              child: const Text("Login"),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const RegisterView()));
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
+              child: const Text("Create new account"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -140,8 +137,6 @@ class _LoginViewState extends State<LoginView> {
   }
 
   void checkLogin(String email, String password) async {
-    // await FirebaseAuth.instance.signOut();
-
     if (email.isEmpty) {
       _showAlert(context, "Error", "Email field is empty");
       return;
@@ -160,9 +155,9 @@ class _LoginViewState extends State<LoginView> {
       );
 
       print(userCredential);
-      if (mounted) {
-        _showAlert(context, "", "$email logged in successfully!");
-      }
+      // if (mounted) {
+      //   _showAlert(context, "", "$email logged in successfully!");
+      // }
     } on FirebaseAuthException catch (error) {
       if (error.code == 'user-not-found') {
         if (mounted) {
