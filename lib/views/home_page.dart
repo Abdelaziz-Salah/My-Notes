@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:mynotes/views/verify_email.dart';
+import 'package:mynotes/views/verify_email_view.dart';
+import 'dart:developer';
 
+enum MenuAction { logout }
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,14 +29,15 @@ class _HomePageState extends State<HomePage> {
       // If no user is signed in, navigate to LoginView
       if (user == null) {
         if (mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil("/login/", (route) => false);
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil("/login/", (route) => false);
         }
       } else {
-        print("Logged user: $user");
+        log("Logged user: $user");
         if (user.emailVerified) {
-          print("You are a verified user");
+          log("You are a verified user");
         } else {
-          print("You need to verify your email");
+          log("You need to verify your email");
           if (mounted) {
             Navigator.of(context).push(MaterialPageRoute(
                 builder: (context) => const VerifyEmailView()));
@@ -47,32 +50,37 @@ class _HomePageState extends State<HomePage> {
   void checkEmailVerification() {
     final user = FirebaseAuth.instance.currentUser;
     if (user?.emailVerified ?? false) {
-      print("You are a verified user");
+      log("You are a verified user");
     } else {
-      print("You need to verify your email");
+      log("You need to verify your email");
     }
-    print(user);
+    log(user.toString());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: const Text("Home"),
+          title: const Text("Notes"),
           backgroundColor: Colors.blueAccent,
           titleTextStyle: const TextStyle(
               color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
           elevation: 5,
           centerTitle: true,
           actions: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 0),
-              child: TextButton(
-                  onPressed: () async {
-                    signOut();
-                  },
-                  style: TextButton.styleFrom(foregroundColor: Colors.white),
-                  child: const Text("Sign out")),
+            PopupMenuButton<MenuAction>(
+              onSelected: (value) {
+                _selectMenuItem(value);
+              },
+              itemBuilder: (context) {
+                return [
+                  const PopupMenuItem(
+                    value: MenuAction.logout,
+                    child: Text("Logout"),
+                  )
+                ];
+              },
+              iconColor: Colors.white,
             )
           ],
         ),
@@ -85,7 +93,38 @@ class _HomePageState extends State<HomePage> {
     try {
       await FirebaseAuth.instance.signOut();
     } catch (error) {
-      print("Signout error: $error");
+      log("Signout error: $error");
     }
+  }
+
+  void _selectMenuItem(MenuAction action) {
+    switch (action) {
+      case MenuAction.logout:
+        _showLogoutAlert(context);
+    }
+  }
+
+  void _showLogoutAlert(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Center(
+          child: AlertDialog(
+            title: const Text("Logout"),
+            content: const Text("Are you sure you want to logout?"),
+            actions: <Widget>[
+              TextButton(
+                onPressed: Navigator.of(context).pop,
+                child: const Text("No"),
+              ),
+              TextButton(
+                onPressed: signOut,
+                child: const Text("Yes"),
+              )
+            ],
+          ),
+        );
+      },
+    );
   }
 }

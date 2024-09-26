@@ -2,8 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:mynotes/firebase_options.dart';
-import 'package:mynotes/views/home_page.dart';
-
+import 'dart:developer';
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
 
@@ -136,7 +135,7 @@ class _RegisterViewState extends State<RegisterView> {
         email: email,
         password: password,
       );
-      print(userCredential);
+      log(userCredential.toString());
       if (mounted) {
         Navigator.of(context)
             .pushNamedAndRemoveUntil("/home/", (route) => false);

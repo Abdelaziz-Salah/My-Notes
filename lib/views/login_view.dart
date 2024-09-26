@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:mynotes/views/home_page.dart';
 import 'package:mynotes/views/register_view.dart';
+import 'dart:developer';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -40,9 +40,9 @@ class _LoginViewState extends State<LoginView> {
     authStateChanges.listen((User? user) {
       // If no user is signed in, navigate to LoginView
       if (user == null) {
-        print("There's no user logged in");
+        log("There's no user logged in");
       } else {
-        print("Logged user: $user");
+        log("Logged user: $user");
         if (mounted) {
           Navigator.of(context)
               .pushNamedAndRemoveUntil("/home/", (route) => false);
@@ -154,7 +154,7 @@ class _LoginViewState extends State<LoginView> {
         password: password,
       );
 
-      print(userCredential);
+      log(userCredential.toString());
       // if (mounted) {
       //   _showAlert(context, "", "$email logged in successfully!");
       // }
@@ -174,7 +174,7 @@ class _LoginViewState extends State<LoginView> {
         }
       }
     } catch (error) {
-      print(error);
+      log(error.toString());
       if (mounted) {
         _showAlert(context, "Error", error.toString());
       }
