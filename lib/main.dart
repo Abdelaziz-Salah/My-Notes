@@ -4,6 +4,8 @@ import 'package:mynotes/firebase_options.dart';
 import 'package:mynotes/views/home_page.dart';
 import 'package:mynotes/views/login_view.dart';
 import 'package:mynotes/views/register_view.dart';
+import 'package:mynotes/constants/routes.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,8 +21,9 @@ void main() async {
       ),
       home: const LoginView(),
       routes: {
-        "/home/": (context) => const HomePage(),
-        "/register/": (context) => const RegisterView()
+        homeRoute: (context) => const HomePage(),
+        registerRoute: (context) => const RegisterView(),
+        loginRoute: (context) => const LoginView()
       },
     ),
   );
