@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mynotes/constants/routes.dart';
+import 'package:mynotes/services/auth/auth_exceptions.dart';
+import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/views/register_view.dart';
 import 'dart:developer';
 
@@ -149,33 +151,26 @@ class _LoginViewState extends State<LoginView> {
     }
 
     try {
-      final userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final user =
+          await AuthService.firebase().logIn(
         email: email,
         password: password,
       );
 
-      log(userCredential.toString());
-      // if (mounted) {
-      //   _showAlert(context, "", "$email logged in successfully!");
-      // }
-    } on FirebaseAuthException catch (error) {
-      if (error.code == 'user-not-found') {
-        if (mounted) {
-          _showAlert(context, "Error", "No user found for that email.");
-        }
-      } else if (error.code == 'wrong-password') {
-        if (mounted) {
-          _showAlert(
-              context, "Error", "Wrong password provided for that user.");
-        }
-      } else {
-        if (mounted) {
-          _showAlert(context, "Error", error.code);
-        }
+      log(user.toString());
+    } on UserNotFoundAuthException {
+      if (mounted) {
+        _showAlert(context, "Error", "No user found for that email.");
+      }
+    } on WrongPasswordAuthException {
+      if (mounted) {
+        _showAlert(context, "Error", "Wrong password provided for that user.");
+      }
+    } on GenericAuthException catch (error) {
+      if (mounted) {
+        _showAlert(context, "Error", error.toString());
       }
     } catch (error) {
-      log(error.toString());
       if (mounted) {
         _showAlert(context, "Error", error.toString());
       }

@@ -3,7 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:mynotes/constants/routes.dart';
 import 'package:mynotes/firebase_options.dart';
+import 'package:mynotes/services/auth/auth_exceptions.dart';
 import 'dart:developer';
+
+import 'package:mynotes/services/auth/auth_service.dart';
+
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
 
@@ -43,59 +47,46 @@ class _RegisterViewState extends State<RegisterView> {
         elevation: 5,
         centerTitle: true,
       ),
-      body: FutureBuilder(
-          future: Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          ),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.done:
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 15.0, vertical: 15.0),
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _email,
-                        decoration: const InputDecoration(
-                            labelText: "Enter your email",
-                            border: OutlineInputBorder()),
-                        keyboardType: TextInputType.emailAddress,
-                        enableSuggestions: false,
-                        autocorrect: false,
-                      ),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: _password,
-                        decoration: const InputDecoration(
-                            labelText: "Enter your password",
-                            border: OutlineInputBorder()),
-                        obscureText: true,
-                        enableSuggestions: false,
-                        autocorrect: false,
-                      ),
-                      const SizedBox(height: 20),
-                      TextButton(
-                        onPressed: () async {
-                          final email = _email.text;
-                          final password = _password.text;
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _email,
+              decoration: const InputDecoration(
+                  labelText: "Enter your email", border: OutlineInputBorder()),
+              keyboardType: TextInputType.emailAddress,
+              enableSuggestions: false,
+              autocorrect: false,
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _password,
+              decoration: const InputDecoration(
+                  labelText: "Enter your password",
+                  border: OutlineInputBorder()),
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () async {
+                final email = _email.text;
+                final password = _password.text;
 
-                          checkLogin(email, password);
-                        },
-                        style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.blueAccent,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 60, vertical: 15)),
-                        child: const Text("Register"),
-                      ),
-                    ],
-                  ),
-                );
-              default:
-                return const Text("Loading....");
-            }
-          }),
+                checkLogin(email, password);
+              },
+              style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blueAccent,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 60, vertical: 15)),
+              child: const Text("Register"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -131,8 +122,7 @@ class _RegisterViewState extends State<RegisterView> {
     }
 
     try {
-      final userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final userCredential = await AuthService.firebase().createUser(
         email: email,
         password: password,
       );
@@ -140,6 +130,22 @@ class _RegisterViewState extends State<RegisterView> {
       if (mounted) {
         Navigator.of(context)
             .pushNamedAndRemoveUntil(homeRoute, (route) => false);
+      }
+    } on InvalidEmailAuthException {
+      if (mounted) {
+        _showAlert(context, "Invalid Email");
+      }
+    } on WeakPasswordAuthException {
+      if (mounted) {
+        _showAlert(context, "Weak Password");
+      }
+    } on EmailAlreadyInUseAuthException {
+      if (mounted) {
+        _showAlert(context, "Email is already in use");
+      }
+    } on GenericAuthException catch (error) {
+      if (mounted) {
+        _showAlert(context, error.toString());
       }
     } catch (error) {
       if (mounted) {

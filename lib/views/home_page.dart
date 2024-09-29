@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mynotes/constants/routes.dart';
+import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/views/verify_email_view.dart';
 import 'dart:developer';
-
-enum MenuAction { logout }
+import 'package:mynotes/enums/menu_action.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -49,8 +49,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void checkEmailVerification() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user?.emailVerified ?? false) {
+    final user = AuthService.firebase().currentUser;
+    if (user?.isEmailVerified ?? false) {
       log("You are a verified user");
     } else {
       log("You need to verify your email");
@@ -86,13 +86,13 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         body: const Center(
-          child: Text("Logged in"),
+          child: Text(""),
         ));
   }
 
   void signOut() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      await AuthService.firebase().logout();
     } catch (error) {
       log("Signout error: $error");
     }
