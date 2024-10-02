@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mynotes/constants/routes.dart';
 import 'package:mynotes/services/auth/auth_service.dart';
+import 'package:mynotes/services/crud/notes_service.dart';
 import 'package:mynotes/views/verify_email_view.dart';
 import 'dart:developer';
 import 'package:mynotes/enums/menu_action.dart';
@@ -14,11 +15,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late final NotesService _notesService;
+  String get userEmail => AuthService.firebase().currentUser!.email!;
+
   @override
   void initState() {
-    super.initState();
-
     _checkUser();
+    _notesService = NotesService();
+    _notesService.open();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _notesService.close();
+    super.dispose();
   }
 
   void _checkUser() {
@@ -61,33 +72,52 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text("Notes"),
-          backgroundColor: Colors.blueAccent,
-          titleTextStyle: const TextStyle(
-              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          elevation: 5,
-          centerTitle: true,
-          actions: [
-            PopupMenuButton<MenuAction>(
-              onSelected: (value) {
-                _selectMenuItem(value);
-              },
-              itemBuilder: (context) {
-                return [
-                  const PopupMenuItem(
-                    value: MenuAction.logout,
-                    child: Text("Logout"),
-                  )
-                ];
-              },
-              iconColor: Colors.white,
-            )
-          ],
-        ),
-        body: const Center(
-          child: Text(""),
-        ));
+      appBar: AppBar(
+        title: const Text("Notes"),
+        backgroundColor: Colors.blueAccent,
+        titleTextStyle: const TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        elevation: 5,
+        centerTitle: true,
+        actions: [
+          PopupMenuButton<MenuAction>(
+            onSelected: (value) {
+              _selectMenuItem(value);
+            },
+            itemBuilder: (context) {
+              return [
+                const PopupMenuItem(
+                  value: MenuAction.logout,
+                  child: Text("Logout"),
+                )
+              ];
+            },
+            iconColor: Colors.white,
+          )
+        ],
+      ),
+      body: FutureBuilder(
+        future: _notesService.getOrCreateUser(email: userEmail),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.done:
+              return StreamBuilder(
+                stream: _notesService.allNotes,
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.waiting:
+                      return Text("Waiting for all Notes.");
+                    default:
+                      return CircularProgressIndicator();
+                  }
+                },
+              );
+            default:
+              return CircularProgressIndicator();
+          }
+        },
+      ),
+    );
   }
 
   void signOut() async {
