@@ -32,6 +32,81 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Notes"),
+        backgroundColor: Colors.blueAccent,
+        titleTextStyle: const TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        elevation: 5,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              if (mounted) {
+                Navigator.of(context).pushNamed(newNoteRoute);
+              }
+            },
+            icon: const Icon(Icons.add),
+            color: Colors.white,
+          ),
+          PopupMenuButton<MenuAction>(
+            onSelected: (value) {
+              _selectMenuItem(value);
+            },
+            itemBuilder: (context) {
+              return [
+                const PopupMenuItem(
+                  value: MenuAction.logout,
+                  child: Text("Logout"),
+                )
+              ];
+            },
+            iconColor: Colors.white,
+          )
+        ],
+      ),
+      body: FutureBuilder(
+        future: _notesService.getOrCreateUser(email: userEmail),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.done:
+              return StreamBuilder(
+                stream: _notesService.allNotes,
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.waiting:
+                      return const Text("Waiting for all Notes.");
+                    default:
+                      return const CircularProgressIndicator();
+                  }
+                },
+              );
+            default:
+              return const CircularProgressIndicator();
+          }
+        },
+      ),
+    );
+  }
+
+  void signOut() async {
+    try {
+      await AuthService.firebase().logout();
+    } catch (error) {
+      log("Signout error: $error");
+    }
+  }
+
+  void _selectMenuItem(MenuAction action) {
+    switch (action) {
+      case MenuAction.logout:
+        _showLogoutAlert(context);
+    }
+  }
+
   void _checkUser() {
     final auth = FirebaseAuth.instance;
 
@@ -67,72 +142,6 @@ class _HomePageState extends State<HomePage> {
       log("You need to verify your email");
     }
     log(user.toString());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Notes"),
-        backgroundColor: Colors.blueAccent,
-        titleTextStyle: const TextStyle(
-            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-        elevation: 5,
-        centerTitle: true,
-        actions: [
-          PopupMenuButton<MenuAction>(
-            onSelected: (value) {
-              _selectMenuItem(value);
-            },
-            itemBuilder: (context) {
-              return [
-                const PopupMenuItem(
-                  value: MenuAction.logout,
-                  child: Text("Logout"),
-                )
-              ];
-            },
-            iconColor: Colors.white,
-          )
-        ],
-      ),
-      body: FutureBuilder(
-        future: _notesService.getOrCreateUser(email: userEmail),
-        builder: (context, snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.done:
-              return StreamBuilder(
-                stream: _notesService.allNotes,
-                builder: (context, snapshot) {
-                  switch (snapshot.connectionState) {
-                    case ConnectionState.waiting:
-                      return Text("Waiting for all Notes.");
-                    default:
-                      return CircularProgressIndicator();
-                  }
-                },
-              );
-            default:
-              return CircularProgressIndicator();
-          }
-        },
-      ),
-    );
-  }
-
-  void signOut() async {
-    try {
-      await AuthService.firebase().logout();
-    } catch (error) {
-      log("Signout error: $error");
-    }
-  }
-
-  void _selectMenuItem(MenuAction action) {
-    switch (action) {
-      case MenuAction.logout:
-        _showLogoutAlert(context);
-    }
   }
 
   void _showLogoutAlert(BuildContext context) {
