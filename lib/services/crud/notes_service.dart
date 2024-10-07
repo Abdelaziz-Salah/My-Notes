@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -12,11 +11,16 @@ class NotesService {
   List<DatabaseNote> _notes = [];
 
   static final NotesService _shared = NotesService._sharedInstance();
-  NotesService._sharedInstance();
+  NotesService._sharedInstance() {
+    _notesStreamController = StreamController<List<DatabaseNote>>.broadcast(
+      onListen: () {
+        _notesStreamController.sink.add(_notes);
+      },
+    );
+  }
   factory NotesService() => _shared;
 
-  final _notesStreamController =
-      StreamController<List<DatabaseNote>>.broadcast();
+  late final StreamController<List<DatabaseNote>> _notesStreamController;
 
   Stream<List<DatabaseNote>> get allNotes => _notesStreamController.stream;
 
@@ -73,7 +77,7 @@ class NotesService {
     final results = await db.query(
       noteTable,
       limit: 1,
-      where: "id: ?",
+      where: "id = ?",
       whereArgs: [id],
     );
 
@@ -103,7 +107,7 @@ class NotesService {
     final db = _getDatabaseOrThrow();
     final deletedCount = await db.delete(
       noteTable,
-      where: "id: ?",
+      where: "id = ?",
       whereArgs: [id],
     );
 
@@ -152,7 +156,7 @@ class NotesService {
     final results = await db.query(
       userTable,
       limit: 1,
-      where: "email: ?",
+      where: "email = ?",
       whereArgs: [email.toLowerCase()],
     );
 
@@ -170,7 +174,7 @@ class NotesService {
     final results = await db.query(
       userTable,
       limit: 1,
-      where: "email: ?",
+      where: "email = ?",
       whereArgs: [email.toLowerCase()],
     );
 
@@ -197,7 +201,7 @@ class NotesService {
     final db = _getDatabaseOrThrow();
     final deletedCount = await db.delete(
       userTable,
-      where: "email: ?",
+      where: "email = ?",
       whereArgs: [email.toLowerCase()],
     );
 
@@ -241,6 +245,8 @@ class NotesService {
       await _cacheNotes();
     } on MissingPlatformDirectoryException {
       throw UnableToGetDocumnetsDirectory();
+    } on CouldNotFindNote {
+      // EMPTY
     }
   }
 
@@ -301,7 +307,7 @@ class DatabaseNote {
 
   @override
   String toString() =>
-      "PeNoterson, ID: $id, User ID: $userId, isSyncedWithCloud = $isSyncedWithCloud, text: $text";
+      "Note, ID: $id, User ID: $userId, isSyncedWithCloud = $isSyncedWithCloud, text: $text";
 
   @override
   bool operator ==(covariant DatabaseNote other) => id == other.id;

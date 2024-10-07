@@ -27,12 +27,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void dispose() {
-    _notesService.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -59,9 +53,13 @@ class _HomePageState extends State<HomePage> {
             itemBuilder: (context) {
               return [
                 const PopupMenuItem(
+                  value: MenuAction.deleteAll,
+                  child: Text("Delete all"),
+                ),
+                const PopupMenuItem(
                   value: MenuAction.logout,
                   child: Text("Logout"),
-                )
+                ),
               ];
             },
             iconColor: Colors.white,
@@ -78,9 +76,41 @@ class _HomePageState extends State<HomePage> {
                 builder: (context, snapshot) {
                   switch (snapshot.connectionState) {
                     case ConnectionState.waiting:
-                      return const Text("Waiting for all Notes.");
+                    case ConnectionState.active:
+                      if (snapshot.hasData) {
+                        final allNotes = snapshot.data as List<DatabaseNote>;
+                        log("ALL Notes: $allNotes");
+                        return ListView.separated(
+                          separatorBuilder: (context, index) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 0),
+                              child: Divider(
+                                thickness: 1,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
+                          itemCount: allNotes.length,
+                          itemBuilder: (context, index) {
+                            final text = allNotes[index].text;
+                            return ListTile(
+                              title: Text(
+                                text,
+                                maxLines: 1,
+                                softWrap: true,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          },
+                        );
+                      } else {
+                        return const Text("No Data Found");
+                      }
                     default:
-                      return const CircularProgressIndicator();
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
                   }
                 },
               );
@@ -100,10 +130,23 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void deleteAllNotes() async {
+    try {
+      await _notesService.deleteAllNotes();
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (error) {
+      log("delete all notes error: $error");
+    }
+  }
+
   void _selectMenuItem(MenuAction action) {
     switch (action) {
       case MenuAction.logout:
         _showLogoutAlert(context);
+      case MenuAction.deleteAll:
+        _showDeleteAllAlert(context);
     }
   }
 
@@ -159,6 +202,30 @@ class _HomePageState extends State<HomePage> {
               ),
               TextButton(
                 onPressed: signOut,
+                child: const Text("Yes"),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteAllAlert(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Center(
+          child: AlertDialog(
+            title: const Text("Delete all notes"),
+            content: const Text("Are you sure you want to delete all notes?"),
+            actions: <Widget>[
+              TextButton(
+                onPressed: Navigator.of(context).pop,
+                child: const Text("No"),
+              ),
+              TextButton(
+                onPressed: deleteAllNotes,
                 child: const Text("Yes"),
               )
             ],
