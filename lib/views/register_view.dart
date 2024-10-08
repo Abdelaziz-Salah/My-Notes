@@ -4,6 +4,7 @@ import 'package:mynotes/services/auth/auth_exceptions.dart';
 import 'dart:developer';
 
 import 'package:mynotes/services/auth/auth_service.dart';
+import 'package:mynotes/utilities/dialogs/error_dialog.dart';
 
 class RegisterView extends StatefulWidget {
   const RegisterView({super.key});
@@ -87,34 +88,14 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  void _showAlert(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Center(
-          child: AlertDialog(
-            title: const Text("Error"),
-            content: Text(message),
-            actions: <Widget>[
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text("Ok"),
-              )
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   void checkLogin(String email, String password) async {
     if (email.isEmpty) {
-      _showAlert(context, "Email field is empty");
+      showErrorDialog(context, "Email field is empty");
       return;
     }
 
     if (password.isEmpty) {
-      _showAlert(context, "Password field is empty");
+      showErrorDialog(context, "Password field is empty");
       return;
     }
 
@@ -130,23 +111,23 @@ class _RegisterViewState extends State<RegisterView> {
       }
     } on InvalidEmailAuthException {
       if (mounted) {
-        _showAlert(context, "Invalid Email");
+        showErrorDialog(context, "Invalid Email");
       }
     } on WeakPasswordAuthException {
       if (mounted) {
-        _showAlert(context, "Weak Password");
+        showErrorDialog(context, "Weak Password");
       }
     } on EmailAlreadyInUseAuthException {
       if (mounted) {
-        _showAlert(context, "Email is already in use");
+        showErrorDialog(context, "Email is already in use");
       }
     } on GenericAuthException catch (error) {
       if (mounted) {
-        _showAlert(context, error.toString());
+        showErrorDialog(context, error.toString());
       }
     } catch (error) {
       if (mounted) {
-        _showAlert(context, error.toString());
+        showErrorDialog(context, error.toString());
       }
     }
   }

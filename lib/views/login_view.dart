@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mynotes/constants/routes.dart';
 import 'package:mynotes/services/auth/auth_exceptions.dart';
 import 'package:mynotes/services/auth/auth_service.dart';
+import 'package:mynotes/utilities/dialogs/error_dialog.dart';
 import 'package:mynotes/views/register_view.dart';
 import 'dart:developer';
 
@@ -119,40 +120,19 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  void _showAlert(BuildContext context, String title, String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Center(
-          child: AlertDialog(
-            title: Text(title),
-            content: Text(message),
-            actions: <Widget>[
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text("Ok"),
-              )
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   void checkLogin(String email, String password) async {
     if (email.isEmpty) {
-      _showAlert(context, "Error", "Email field is empty");
+      showErrorDialog(context, "Email field is empty");
       return;
     }
 
     if (password.isEmpty) {
-      _showAlert(context, "Error", "Password field is empty");
+      showErrorDialog(context, "Password field is empty");
       return;
     }
 
     try {
-      final user =
-          await AuthService.firebase().logIn(
+      final user = await AuthService.firebase().logIn(
         email: email,
         password: password,
       );
@@ -160,19 +140,19 @@ class _LoginViewState extends State<LoginView> {
       log(user.toString());
     } on UserNotFoundAuthException {
       if (mounted) {
-        _showAlert(context, "Error", "No user found for that email.");
+        showErrorDialog(context, "No user found for that email.");
       }
     } on WrongPasswordAuthException {
       if (mounted) {
-        _showAlert(context, "Error", "Wrong password provided for that user.");
+        showErrorDialog(context, "Wrong password provided for that user.");
       }
     } on GenericAuthException catch (error) {
       if (mounted) {
-        _showAlert(context, "Error", error.toString());
+        showErrorDialog(context, error.toString());
       }
     } catch (error) {
       if (mounted) {
-        _showAlert(context, "Error", error.toString());
+        showErrorDialog(context, error.toString());
       }
     }
   }

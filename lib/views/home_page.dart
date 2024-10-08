@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:mynotes/constants/routes.dart';
 import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/services/crud/notes_service.dart';
+import 'package:mynotes/utilities/dialogs/logout_dialog.dart';
+import 'package:mynotes/views/notes_list_view.dart';
 import 'package:mynotes/views/verify_email_view.dart';
 import 'dart:developer';
 import 'package:mynotes/enums/menu_action.dart';
@@ -75,33 +77,14 @@ class _HomePageState extends State<HomePage> {
                 stream: _notesService.allNotes,
                 builder: (context, snapshot) {
                   switch (snapshot.connectionState) {
-                    case ConnectionState.waiting:
                     case ConnectionState.active:
                       if (snapshot.hasData) {
                         final allNotes = snapshot.data as List<DatabaseNote>;
                         log("ALL Notes: $allNotes");
-                        return ListView.separated(
-                          separatorBuilder: (context, index) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 0),
-                              child: Divider(
-                                thickness: 1,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                          itemCount: allNotes.length,
-                          itemBuilder: (context, index) {
-                            final text = allNotes[index].text;
-                            return ListTile(
-                              title: Text(
-                                text,
-                                maxLines: 1,
-                                softWrap: true,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
+                        return NotesListView(
+                          notes: allNotes,
+                          onDeleteNote: (note) async {
+                            await _notesService.deleteNote(id: note.id);
                           },
                         );
                       } else {
@@ -187,28 +170,11 @@ class _HomePageState extends State<HomePage> {
     log(user.toString());
   }
 
-  void _showLogoutAlert(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Center(
-          child: AlertDialog(
-            title: const Text("Logout"),
-            content: const Text("Are you sure you want to logout?"),
-            actions: <Widget>[
-              TextButton(
-                onPressed: Navigator.of(context).pop,
-                child: const Text("No"),
-              ),
-              TextButton(
-                onPressed: signOut,
-                child: const Text("Yes"),
-              )
-            ],
-          ),
-        );
-      },
-    );
+  void _showLogoutAlert(BuildContext context) async {
+    final shouldLogout = await showLogoutDialog(context);
+    if (shouldLogout) {
+      signOut();
+    }
   }
 
   void _showDeleteAllAlert(BuildContext context) {
