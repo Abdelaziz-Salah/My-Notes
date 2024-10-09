@@ -2,15 +2,16 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/services/crud/notes_service.dart';
+import 'package:mynotes/utilities/generics/get_arguments.dart';
 
-class NewNoteView extends StatefulWidget {
-  const NewNoteView({super.key});
+class CreateUpdateNoteView extends StatefulWidget {
+  const CreateUpdateNoteView({super.key});
 
   @override
-  State<NewNoteView> createState() => _NewNoteViewState();
+  State<CreateUpdateNoteView> createState() => _CreateUpdateNoteViewState();
 }
 
-class _NewNoteViewState extends State<NewNoteView> {
+class _CreateUpdateNoteViewState extends State<CreateUpdateNoteView> {
   late final TextEditingController _textController;
   DatabaseNote? _note;
   late final NotesService _notesService;
@@ -31,7 +32,15 @@ class _NewNoteViewState extends State<NewNoteView> {
     super.dispose();
   }
 
-  Future<DatabaseNote> _createNewNote() async {
+  Future<DatabaseNote> createOrGetExistingNote(BuildContext context) async {
+    final widgetNote = context.getArguments<DatabaseNote>();
+
+    if (widgetNote != null) {
+      _note = widgetNote;
+      _textController.text = widgetNote.text;
+      return widgetNote;
+    }
+
     final existingNotes = _note;
     if (existingNotes != null) {
       return existingNotes;
@@ -40,6 +49,7 @@ class _NewNoteViewState extends State<NewNoteView> {
     final email = currentUser.email!;
     final owner = await _notesService.getUser(email: email);
     final note = await _notesService.createNote(owner: owner);
+    _note = note;
     return note;
   }
 
@@ -93,11 +103,10 @@ class _NewNoteViewState extends State<NewNoteView> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder(
-        future: _createNewNote(),
+        future: createOrGetExistingNote(context),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.done:
-              _note = snapshot.data as DatabaseNote;
               _setupTextControllerListener();
               return Padding(
                 padding: const EdgeInsets.all(10),

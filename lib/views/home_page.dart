@@ -42,7 +42,7 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             onPressed: () {
               if (mounted) {
-                Navigator.of(context).pushNamed(newNoteRoute);
+                Navigator.of(context).pushNamed(createOrUpdateNoteRoute);
               }
             },
             icon: const Icon(Icons.add),
@@ -85,6 +85,12 @@ class _HomePageState extends State<HomePage> {
                           notes: allNotes,
                           onDeleteNote: (note) async {
                             await _notesService.deleteNote(id: note.id);
+                          },
+                          onTapNote: (note) {
+                            Navigator.of(context).pushNamed(
+                              createOrUpdateNoteRoute,
+                              arguments: note,
+                            );
                           },
                         );
                       } else {

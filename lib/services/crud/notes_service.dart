@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
@@ -48,7 +49,12 @@ class NotesService {
 
     await getNote(id: note.id);
 
-    final updatesCount = await db.update(noteTable, {textColumn: text});
+    final updatesCount = await db.update(
+      noteTable,
+      {textColumn: text},
+      where: "id = ?",
+      whereArgs: [note.id],
+    );
 
     if (updatesCount == 0) {
       throw CouldNotFindNote();
@@ -68,7 +74,8 @@ class NotesService {
     if (notes.isEmpty) {
       throw CouldNotFindNote();
     } else {
-      return notes.map((noteMap) => DatabaseNote.fromRow(noteMap));
+      final result = notes.map((noteMap) => DatabaseNote.fromRow(noteMap));
+      return result;
     }
   }
 
