@@ -158,8 +158,7 @@ class _HomePageState extends State<HomePage> {
         } else {
           log("You need to verify your email");
           if (mounted) {
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (context) => const VerifyEmailView()));
+                Navigator.of(context).pushNamedAndRemoveUntil(verifyEmailRoute, (route) => false);
           }
         }
       }
