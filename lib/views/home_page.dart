@@ -5,7 +5,6 @@ import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/services/crud/notes_service.dart';
 import 'package:mynotes/utilities/dialogs/logout_dialog.dart';
 import 'package:mynotes/views/notes_list_view.dart';
-import 'package:mynotes/views/verify_email_view.dart';
 import 'dart:developer';
 import 'package:mynotes/enums/menu_action.dart';
 
@@ -18,7 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final NotesService _notesService;
-  String get userEmail => AuthService.firebase().currentUser!.email!;
+  String get userEmail => AuthService.firebase().currentUser!.email;
 
   @override
   void initState() {
@@ -158,7 +157,8 @@ class _HomePageState extends State<HomePage> {
         } else {
           log("You need to verify your email");
           if (mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil(verifyEmailRoute, (route) => false);
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil(verifyEmailRoute, (route) => false);
           }
         }
       }
