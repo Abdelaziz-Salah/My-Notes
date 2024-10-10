@@ -16,6 +16,17 @@ class FirebaseCloudStorage {
     }
   }
 
+  Future<void> deleteAllNotes() async {
+    try {
+      final querySnapshots = await notes.get();
+      for (QueryDocumentSnapshot doc in querySnapshots.docs) {
+        await doc.reference.delete();
+      }
+    } catch (_) {
+      throw CouldNotDeleteNoteException();
+    }
+  }
+
   Future<void> updateNote({
     required String documentId,
     required String text,
@@ -45,11 +56,7 @@ class FirebaseCloudStorage {
           .get()
           .then((value) {
         return value.docs.map((doc) {
-          return CloudNote(
-            documentId: doc.id,
-            ownerUserId: doc.data()[ownerUserIdFieldName],
-            text: doc.data()[textFieldName],
-          );
+          return CloudNote.fromSnapshot(doc);
         });
       });
     } catch (e) {
@@ -57,11 +64,18 @@ class FirebaseCloudStorage {
     }
   }
 
-  void createNewNote({required String ownerUserId}) async {
-    await notes.add({
+  Future<CloudNote> createNewNote({required String ownerUserId}) async {
+    final document = await notes.add({
       ownerUserIdFieldName: ownerUserId,
       textFieldName: "",
     });
+
+    final fetchedNote = await document.get();
+    return CloudNote(
+      documentId: fetchedNote.id,
+      ownerUserId: ownerUserId,
+      text: "",
+    );
   }
 
   static final FirebaseCloudStorage _shared =
