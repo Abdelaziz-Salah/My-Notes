@@ -107,7 +107,7 @@ class _RegisterViewState extends State<RegisterView> {
       log(userCredential.toString());
       if (mounted) {
         Navigator.of(context)
-            .pushNamedAndRemoveUntil(homeRoute, (route) => false);
+            .pushNamedAndRemoveUntil(notesRoute, (route) => false);
       }
     } on InvalidEmailAuthException {
       if (mounted) {

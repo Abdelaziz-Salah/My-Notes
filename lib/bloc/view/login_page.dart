@@ -31,9 +31,8 @@ class LoginForm extends StatelessWidget {
               .showSnackBar(SnackBar(content: Text("Login Successful")));
         } else if (state is LoginErrorState) {
           // Handle login error (e.g., show error message)
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.errorMessage),
-          ));
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.errorMessage)));
         }
       },
       child: BlocBuilder<LoginBloc, LoginState>(
