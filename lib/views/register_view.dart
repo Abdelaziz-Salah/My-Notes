@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mynotes/constants/routes.dart';
-import 'package:mynotes/services/auth/auth_exceptions.dart';
-import 'dart:developer';
-
-import 'package:mynotes/services/auth/auth_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mynotes/services/auth/bloc/auth_bloc.dart';
+import 'package:mynotes/services/auth/bloc/auth_event.dart';
+import 'package:mynotes/services/auth/bloc/auth_state.dart';
 import 'package:mynotes/utilities/dialogs/error_dialog.dart';
 
 class RegisterView extends StatefulWidget {
@@ -68,19 +67,42 @@ class _RegisterViewState extends State<RegisterView> {
               autocorrect: false,
             ),
             const SizedBox(height: 20),
-            TextButton(
-              onPressed: () async {
-                final email = _email.text;
-                final password = _password.text;
-
-                checkLogin(email, password);
+            BlocListener<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is AuthStateRegistering && state.error != null) {
+                  showErrorDialog(context, state.error!);
+                }
               },
-              style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.blueAccent,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 60, vertical: 15)),
-              child: const Text("Register"),
+              child: BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  if (state is AuthStateRegistering && !state.isLoading) {
+                    return TextButton(
+                      onPressed: () async {
+                        final email = _email.text;
+                        final password = _password.text;
+
+                        checkRegister(email, password);
+                      },
+                      style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blueAccent,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 60, vertical: 15)),
+                      child: const Text("Register"),
+                    );
+                  } else {
+                    return CircularProgressIndicator();
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                context.read<AuthBloc>().add(AuthEventShouldLogin());
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
+              child: const Text("Already have an account?"),
             ),
           ],
         ),
@@ -88,7 +110,7 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  void checkLogin(String email, String password) async {
+  void checkRegister(String email, String password) async {
     if (email.isEmpty) {
       showErrorDialog(context, "Email field is empty");
       return;
@@ -99,36 +121,8 @@ class _RegisterViewState extends State<RegisterView> {
       return;
     }
 
-    try {
-      final userCredential = await AuthService.firebase().createUser(
-        email: email,
-        password: password,
-      );
-      log(userCredential.toString());
-      if (mounted) {
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil(notesRoute, (route) => false);
-      }
-    } on InvalidEmailAuthException {
-      if (mounted) {
-        showErrorDialog(context, "Invalid Email");
-      }
-    } on WeakPasswordAuthException {
-      if (mounted) {
-        showErrorDialog(context, "Weak Password");
-      }
-    } on EmailAlreadyInUseAuthException {
-      if (mounted) {
-        showErrorDialog(context, "Email is already in use");
-      }
-    } on GenericAuthException catch (error) {
-      if (mounted) {
-        showErrorDialog(context, error.toString());
-      }
-    } catch (error) {
-      if (mounted) {
-        showErrorDialog(context, error.toString());
-      }
-    }
+    context
+        .read<AuthBloc>()
+        .add(AuthEventRegister(email: email, password: password));
   }
 }
