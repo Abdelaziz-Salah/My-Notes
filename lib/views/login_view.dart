@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mynotes/constants/routes.dart';
-import 'package:mynotes/services/auth/auth_exceptions.dart';
-import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/services/auth/bloc/auth_bloc.dart';
 import 'package:mynotes/services/auth/bloc/auth_event.dart';
 import 'package:mynotes/services/auth/bloc/auth_state.dart';
 import 'package:mynotes/utilities/dialogs/error_dialog.dart';
 import 'package:mynotes/views/register_view.dart';
-import 'dart:developer';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -39,56 +35,54 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthStateLoginFailure) {
-          showErrorDialog(context, state.exception.toString());
-        }
-      },
-      child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, state) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text("Login"),
-              backgroundColor: Colors.blueAccent,
-              titleTextStyle: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold),
-              elevation: 5,
-              centerTitle: true,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Login"),
+        backgroundColor: Colors.blueAccent,
+        titleTextStyle: const TextStyle(
+            color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        elevation: 5,
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _email,
+              decoration: const InputDecoration(
+                  labelText: "Enter your email", border: OutlineInputBorder()),
+              keyboardType: TextInputType.emailAddress,
+              enableSuggestions: false,
+              autocorrect: false,
             ),
-            body: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _email,
-                    decoration: const InputDecoration(
-                        labelText: "Enter your email",
-                        border: OutlineInputBorder()),
-                    keyboardType: TextInputType.emailAddress,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: _password,
-                    decoration: const InputDecoration(
-                        labelText: "Enter your password",
-                        border: OutlineInputBorder()),
-                    obscureText: true,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                  ),
-                  const SizedBox(height: 20),
-                  TextButton(
+            const SizedBox(height: 20),
+            TextField(
+              controller: _password,
+              decoration: const InputDecoration(
+                  labelText: "Enter your password",
+                  border: OutlineInputBorder()),
+              obscureText: true,
+              enableSuggestions: false,
+              autocorrect: false,
+            ),
+            const SizedBox(height: 20),
+            BlocListener<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is AuthStateLoggedOut && state.error != null) {
+                  showErrorDialog(context, state.error!);
+                }
+              },
+              child: BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  return TextButton(
                     onPressed: () async {
-                      final email = _email.text;
-                      final password = _password.text;
-
-                      checkLogin(email, password);
+                      if (state is AuthStateLoggedOut &&
+                          state.isLoginButtonEnabled) {
+                        final email = _email.text;
+                        final password = _password.text;
+                        checkLogin(email, password);
+                      }
                     },
                     style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
@@ -96,24 +90,23 @@ class _LoginViewState extends State<LoginView> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 60, vertical: 15)),
                     child: const Text("Login"),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const RegisterView()));
-                    },
-                    style: TextButton.styleFrom(
-                        foregroundColor: Colors.blueAccent),
-                    child: const Text("Create new account"),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-          );
-        },
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const RegisterView()));
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
+              child: const Text("Create new account"),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -14,6 +14,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthEventLogout>(_onLogout);
     on<AuthEventSendEmailVerification>(_onSendEmailVerification);
     on<AuthEventCreateUser>(_onCreateUser);
+    on<AuthEventLoginDebounceComplete>(_onLoginDebounceComplete);
   }
 
   void _onInitialize(
@@ -36,7 +37,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthEventLogin event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthStateLoading());
+    emit(AuthStateLoggedOut(isLoginButtonEnabled: false));
 
     final email = event.email;
     final password = event.password;
@@ -50,14 +51,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       log(user.toString());
       emit(AuthStateLoggedIn(user));
     } on UserNotFoundAuthException {
-      emit(AuthStateLoginFailure(Exception("No user found for that email.")));
+      emit(AuthStateLoggedOut(error: "No user found for that email."));
     } on WrongPasswordAuthException {
-      emit(AuthStateLoginFailure(
-          Exception("Wrong password provided for that user.")));
+      emit(AuthStateLoggedOut(error: "Wrong password provided for that user."));
     } on GenericAuthException catch (error) {
-      emit(AuthStateLoginFailure(error));
-    } on Exception catch (error) {
-      emit(AuthStateLoginFailure(error));
+      emit(AuthStateLoggedOut(error: error.errorCode));
+    } on Exception catch (_) {
+      emit(AuthStateLoggedOut(error: "Authentication error"));
     }
   }
 
@@ -72,7 +72,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       emit(AuthStateLoggedOut());
     } on Exception catch (error) {
-      emit(AuthStateLogoutFailure(error));
+      emit(AuthStateLoggedOut(error: error.toString()));
     }
   }
 
@@ -101,7 +101,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       log(user.toString());
       emit(AuthStateLoggedIn(user));
     } on Exception catch (error) {
-      emit(AuthStateLoginFailure(error));
+      emit(AuthStateLoggedOut(error: error.toString()));
     }
+  }
+
+  void _onLoginDebounceComplete(
+    AuthEventLoginDebounceComplete event,
+    Emitter<AuthState> emit,
+  ) {
+    emit(AuthStateLoggedOut(isLoginButtonEnabled: true));
   }
 }

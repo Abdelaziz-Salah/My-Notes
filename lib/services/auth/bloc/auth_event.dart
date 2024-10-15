@@ -36,3 +36,5 @@ class AuthEventLogout extends AuthEvent {
 class AuthEventSendEmailVerification extends AuthEvent {
   const AuthEventSendEmailVerification();
 }
+
+class AuthEventLoginDebounceComplete extends AuthEvent {}

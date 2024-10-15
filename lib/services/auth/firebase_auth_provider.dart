@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mynotes/firebase_options.dart';
 import 'package:mynotes/services/auth/auth_exceptions.dart';
@@ -37,10 +39,10 @@ class FirebaseAuthProvider implements AuthProvider {
         case "invalid-email":
           throw InvalidEmailAuthException();
         default:
-          throw GenericAuthException();
+          throw GenericAuthException(e.code);
       }
-    } catch (_) {
-      throw GenericAuthException();
+    } catch (e) {
+      throw GenericAuthException(e.toString());
     }
   }
 
@@ -72,11 +74,13 @@ class FirebaseAuthProvider implements AuthProvider {
           throw UserNotFoundAuthException();
         case 'wrong-password':
           throw WrongPasswordAuthException();
+
         default:
-          throw GenericAuthException();
+          log("LOGIN ERROR CODE: ${error.code}");
+          throw GenericAuthException(error.code);
       }
     } catch (error) {
-      throw GenericAuthException();
+      throw GenericAuthException(error.toString());
     }
   }
 

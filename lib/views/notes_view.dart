@@ -6,8 +6,10 @@ import 'package:mynotes/main.dart';
 import 'package:mynotes/services/auth/auth_service.dart';
 import 'package:mynotes/services/auth/bloc/auth_bloc.dart';
 import 'package:mynotes/services/auth/bloc/auth_event.dart';
+import 'package:mynotes/services/auth/bloc/auth_state.dart';
 import 'package:mynotes/services/cloud/cloud_note.dart';
 import 'package:mynotes/services/cloud/firebase_cloud_storage.dart';
+import 'package:mynotes/utilities/dialogs/error_dialog.dart';
 import 'package:mynotes/utilities/dialogs/logout_dialog.dart';
 import 'package:mynotes/views/notes_list_view.dart';
 import 'dart:developer';
@@ -37,75 +39,87 @@ class _NotesViewState extends State<NotesView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text("Notes"),
-          backgroundColor: Colors.blueAccent,
-          titleTextStyle: const TextStyle(
-              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-          elevation: 5,
-          centerTitle: true,
-          actions: [
-            IconButton(
-              onPressed: () {
-                if (mounted) {
-                  Navigator.of(context).pushNamed(createOrUpdateNoteRoute);
-                }
-              },
-              icon: const Icon(Icons.add),
-              color: Colors.white,
-            ),
-            PopupMenuButton<MenuAction>(
-              onSelected: (value) {
-                _selectMenuItem(value);
-              },
-              itemBuilder: (context) {
-                return [
-                  const PopupMenuItem(
-                    value: MenuAction.deleteAll,
-                    child: Text("Delete all"),
-                  ),
-                  const PopupMenuItem(
-                    value: MenuAction.logout,
-                    child: Text("Logout"),
-                  ),
-                ];
-              },
-              iconColor: Colors.white,
-            )
-          ],
-        ),
-        body: StreamBuilder(
-          stream: _notesService.allNotes(ownerUserId: userId),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.active:
-                if (snapshot.hasData) {
-                  final allNotes = snapshot.data as Iterable<CloudNote>;
-                  log("ALL Notes: $allNotes");
-                  return NotesListView(
-                    notes: allNotes,
-                    onDeleteNote: (note) async {
-                      await _notesService.deleteNote(
-                          documentId: note.documentId);
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        
+      },
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, state) {
+          return Scaffold(
+              appBar: AppBar(
+                title: const Text("Notes"),
+                backgroundColor: Colors.blueAccent,
+                titleTextStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+                elevation: 5,
+                centerTitle: true,
+                actions: [
+                  IconButton(
+                    onPressed: () {
+                      if (mounted) {
+                        Navigator.of(context)
+                            .pushNamed(createOrUpdateNoteRoute);
+                      }
                     },
-                    onTapNote: (note) {
-                      Navigator.of(context).pushNamed(
-                        createOrUpdateNoteRoute,
-                        arguments: note,
+                    icon: const Icon(Icons.add),
+                    color: Colors.white,
+                  ),
+                  PopupMenuButton<MenuAction>(
+                    onSelected: (value) {
+                      _selectMenuItem(value);
+                    },
+                    itemBuilder: (context) {
+                      return [
+                        const PopupMenuItem(
+                          value: MenuAction.deleteAll,
+                          child: Text("Delete all"),
+                        ),
+                        const PopupMenuItem(
+                          value: MenuAction.logout,
+                          child: Text("Logout"),
+                        ),
+                      ];
+                    },
+                    iconColor: Colors.white,
+                  )
+                ],
+              ),
+              body: StreamBuilder(
+                stream: _notesService.allNotes(ownerUserId: userId),
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.active:
+                      if (snapshot.hasData) {
+                        final allNotes = snapshot.data as Iterable<CloudNote>;
+                        log("ALL Notes: $allNotes");
+                        return NotesListView(
+                          notes: allNotes,
+                          onDeleteNote: (note) async {
+                            await _notesService.deleteNote(
+                                documentId: note.documentId);
+                          },
+                          onTapNote: (note) {
+                            Navigator.of(context).pushNamed(
+                              createOrUpdateNoteRoute,
+                              arguments: note,
+                            );
+                          },
+                        );
+                      } else {
+                        return const Text("No Data Found");
+                      }
+                    default:
+                      return const Center(
+                        child: CircularProgressIndicator(),
                       );
-                    },
-                  );
-                } else {
-                  return const Text("No Data Found");
-                }
-              default:
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-            }
-          },
-        ));
+                  }
+                },
+              ));
+        },
+      ),
+    );
   }
 
   void signOut() async {
