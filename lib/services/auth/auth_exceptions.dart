@@ -15,3 +15,9 @@ class GenericAuthException implements Exception {
 }
 
 class UserNotLoggedInAuthException implements Exception {}
+
+class SendResetPasswordAuthException implements Exception {
+  final String errorCode;
+
+  SendResetPasswordAuthException(this.errorCode);
+}

@@ -4,6 +4,7 @@ import 'package:mynotes/helpers/loading/loading_screen.dart';
 import 'package:mynotes/services/auth/bloc/auth_bloc.dart';
 import 'package:mynotes/services/auth/bloc/auth_event.dart';
 import 'package:mynotes/services/auth/bloc/auth_state.dart';
+import 'package:mynotes/views/forgot_password_view.dart';
 
 import 'package:mynotes/views/login_view.dart';
 import 'package:mynotes/views/notes_view.dart';
@@ -43,6 +44,8 @@ class _HomePageState extends State<HomePage> {
             return LoginView();
           } else if (state is AuthStateRegistering) {
             return RegisterView();
+          } else if (state is AuthStateForgotPassword) {
+            return ForgotPasswordView();
           } else {
             return Scaffold(
               body: Center(

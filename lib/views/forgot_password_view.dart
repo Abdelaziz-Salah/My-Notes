@@ -1,34 +1,32 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mynotes/services/auth/bloc/auth_bloc.dart';
 import 'package:mynotes/services/auth/bloc/auth_event.dart';
 import 'package:mynotes/services/auth/bloc/auth_state.dart';
 import 'package:mynotes/utilities/dialogs/error_dialog.dart';
+import 'package:mynotes/utilities/dialogs/password_reset_email_sent_dialog.dart';
 
-class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+class ForgotPasswordView extends StatefulWidget {
+  const ForgotPasswordView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  State<ForgotPasswordView> createState() => _ForgotPasswordViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   late final TextEditingController _email;
-  late final TextEditingController _password;
 
   @override
   void initState() {
     super.initState();
-
     _email = TextEditingController();
-    _password = TextEditingController();
   }
 
   @override
   void dispose() {
     _email.dispose();
-    _password.dispose();
-
     super.dispose();
   }
 
@@ -36,9 +34,12 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) async {
-        if (state is AuthStateLoggedOut) {
+        if (state is AuthStateForgotPassword) {
           if (state.error != null) {
             showErrorDialog(context, state.error!);
+          } else if (state.hasSentEmail) {
+            _email.clear;
+            await showPasswordResetSentDialog(context);
           }
         }
       },
@@ -46,7 +47,7 @@ class _LoginViewState extends State<LoginView> {
         builder: (context, state) {
           return Scaffold(
             appBar: AppBar(
-              title: const Text("Login"),
+              title: const Text("Forgot Password"),
               backgroundColor: Colors.blueAccent,
               titleTextStyle: const TextStyle(
                   color: Colors.white,
@@ -60,10 +61,6 @@ class _LoginViewState extends State<LoginView> {
                   const EdgeInsets.symmetric(horizontal: 15.0, vertical: 15.0),
               child: Column(
                 children: [
-                  Text(
-                    "Please log in to your account in order to interact with and create notes.",
-                  ),
-                  SizedBox(height: 20),
                   TextField(
                     controller: _email,
                     decoration: const InputDecoration(
@@ -72,53 +69,30 @@ class _LoginViewState extends State<LoginView> {
                     keyboardType: TextInputType.emailAddress,
                     enableSuggestions: false,
                     autocorrect: false,
+                    autofocus: true,
                   ),
                   const SizedBox(height: 20),
-                  TextField(
-                    controller: _password,
-                    decoration: const InputDecoration(
-                        labelText: "Enter your password",
-                        border: OutlineInputBorder()),
-                    obscureText: true,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                  ),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          context
-                              .read<AuthBloc>()
-                              .add(AuthEventForgotPassword());
-                        },
-                        style: TextButton.styleFrom(
-                            foregroundColor: Colors.blueAccent),
-                        child: const Text("Forgot Password?"),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
                   TextButton(
                     onPressed: () async {
                       final email = _email.text;
-                      final password = _password.text;
-                      _checkLogin(email, password);
+                      _resetPassword(email);
                     },
                     style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
                         backgroundColor: Colors.blueAccent,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 60, vertical: 15)),
-                    child: const Text("Login"),
+                    child: const Text("Reset password"),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
                   TextButton(
-                    onPressed: () {
-                      context.read<AuthBloc>().add(AuthEventShouldRegister());
+                    onPressed: () async {
+                      context.read<AuthBloc>().add(AuthEventShouldLogin());
                     },
                     style: TextButton.styleFrom(
-                        foregroundColor: Colors.blueAccent),
-                    child: const Text("Create new account"),
+                      foregroundColor: Colors.blueAccent,
+                    ),
+                    child: const Text("Back to login page"),
                   ),
                 ],
               ),
@@ -129,36 +103,12 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  void _checkLogin(String email, String password) async {
+  void _resetPassword(String email) async {
     if (email.isEmpty) {
       showErrorDialog(context, "Email field is empty");
       return;
     }
 
-    if (password.isEmpty) {
-      showErrorDialog(context, "Password field is empty");
-      return;
-    }
-
-    // try {
-    // final user = await AuthService.firebase().logIn(
-    //   email: email,
-    //   password: password,
-    // );
-
-    // log(user.toString());
-
-    context
-        .read<AuthBloc>()
-        .add(AuthEventLogin(email: email, password: password));
-    // if (mounted) {
-    //   Navigator.of(context)
-    //       .pushNamedAndRemoveUntil(notesRoute, (route) => false);
-    // }
-    // } catch (error) {
-    //   if (mounted) {
-    //     showErrorDialog(context, error.toString());
-    //   }
-    // }
+    context.read<AuthBloc>().add(AuthEventForgotPassword(email: email));
   }
 }

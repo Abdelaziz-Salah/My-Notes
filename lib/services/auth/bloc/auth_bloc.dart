@@ -18,6 +18,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         (event, emit) => emit(AuthStateRegistering(isLoading: false)));
     on<AuthEventShouldLogin>(
         (event, emit) => emit(AuthStateLoggedOut(isLoading: false)));
+    on<AuthEventForgotPassword>(_onForgotPassword);
   }
 
   void _onInitialize(
@@ -126,6 +127,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on Exception catch (_) {
       emit(AuthStateRegistering(
           error: "Authentication error", isLoading: false));
+    }
+  }
+
+  void _onForgotPassword(
+    AuthEventForgotPassword event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthStateForgotPassword(hasSentEmail: false, isLoading: false));
+
+    final email = event.email;
+    if (email == null) {
+      return;
+    } else {
+      emit(AuthStateForgotPassword(hasSentEmail: false, isLoading: true));
+      try {
+        await _provider.resetPassword(email: email);
+        emit(AuthStateForgotPassword(hasSentEmail: true, isLoading: false));
+      } on SendResetPasswordAuthException catch (error) {
+        emit(AuthStateForgotPassword(
+            error: error.errorCode, hasSentEmail: false, isLoading: false));
+      } on GenericAuthException catch (error) {
+        emit(AuthStateForgotPassword(
+            error: error.errorCode, hasSentEmail: false, isLoading: false));
+      } catch (_) {
+        emit(AuthStateForgotPassword(
+          error: "Authentication Error",
+          hasSentEmail: false,
+          isLoading: false,
+        ));
+      }
     }
   }
 }

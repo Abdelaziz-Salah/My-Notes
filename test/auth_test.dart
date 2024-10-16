@@ -92,4 +92,10 @@ class MockAuthProvider implements AuthProvider {
     await Future.delayed(const Duration(seconds: 1));
     _user = const AuthUser(isEmailVerified: true, email: "me@me.com", id: 'user');
   }
+  
+  @override
+  Future<void> resetPassword({required String email}) async {
+    if (!isInitialized) throw NotInitializedException();
+    await Future.delayed(const Duration(seconds: 1));
+  }
 }

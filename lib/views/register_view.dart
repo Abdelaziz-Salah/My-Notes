@@ -55,6 +55,7 @@ class _RegisterViewState extends State<RegisterView> {
               keyboardType: TextInputType.emailAddress,
               enableSuggestions: false,
               autocorrect: false,
+              autofocus: true,
             ),
             const SizedBox(height: 20),
             TextField(
