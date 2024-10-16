@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mynotes/helpers/loading/loading_screen.dart';
 import 'package:mynotes/services/auth/bloc/auth_bloc.dart';
 import 'package:mynotes/services/auth/bloc/auth_event.dart';
 import 'package:mynotes/services/auth/bloc/auth_state.dart';
@@ -21,24 +22,36 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     context.read<AuthBloc>().add(AuthEventInitialize());
 
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is AuthStateLoggedIn) {
-          return NotesView();
-        } else if (state is AuthStateNeedsVerification) {
-          return VerifyEmailView();
-        } else if (state is AuthStateLoggedOut) {
-          return LoginView();
-        } else if (state is AuthStateRegistering) {
-          return RegisterView();
-        } else {
-          return Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state.isLoading) {
+          LoadingScreen().show(
+            context: context,
+            text: state.loadingText ?? "Please wait a moment",
           );
+        } else {
+          LoadingScreen().hide();
         }
       },
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, state) {
+          if (state is AuthStateLoggedIn) {
+            return NotesView();
+          } else if (state is AuthStateNeedsVerification) {
+            return VerifyEmailView();
+          } else if (state is AuthStateLoggedOut) {
+            return LoginView();
+          } else if (state is AuthStateRegistering) {
+            return RegisterView();
+          } else {
+            return Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 }

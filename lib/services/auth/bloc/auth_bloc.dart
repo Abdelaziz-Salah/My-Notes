@@ -8,14 +8,16 @@ import 'package:mynotes/services/auth/bloc/auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthProvider _provider;
 
-  AuthBloc(this._provider) : super(AuthStateUnInitialized()) {
+  AuthBloc(this._provider) : super(AuthStateUnInitialized(isLoading: true)) {
     on<AuthEventInitialize>(_onInitialize);
     on<AuthEventLogin>(_onLogin);
     on<AuthEventLogout>(_onLogout);
     on<AuthEventSendEmailVerification>(_onSendEmailVerification);
     on<AuthEventRegister>(_onRegister);
-    on<AuthEventShouldRegister>((event, emit) => emit(AuthStateRegistering()));
-    on<AuthEventShouldLogin>((event, emit) => emit(AuthStateLoggedOut()));
+    on<AuthEventShouldRegister>(
+        (event, emit) => emit(AuthStateRegistering(isLoading: false)));
+    on<AuthEventShouldLogin>(
+        (event, emit) => emit(AuthStateLoggedOut(isLoading: false)));
   }
 
   void _onInitialize(
@@ -26,11 +28,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final user = _provider.currentUser;
 
     if (user == null) {
-      emit(AuthStateLoggedOut());
+      emit(AuthStateLoggedOut(isLoading: false));
     } else if (!user.isEmailVerified) {
-      emit(AuthStateNeedsVerification());
+      emit(AuthStateNeedsVerification(isLoading: false));
     } else {
-      emit(AuthStateLoggedIn(user));
+      emit(AuthStateLoggedIn(user: user, isLoading: false));
     }
   }
 
@@ -38,8 +40,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthEventLogin event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthStateLoggedOut(isLoading: true));
-
+    emit(AuthStateLoggedOut(
+      isLoading: true,
+      loadingText: "Please wait while I log you in",
+    ));
     final email = event.email;
     final password = event.password;
 
@@ -51,20 +55,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       log(user.toString());
 
       if (!user.isEmailVerified) {
-        emit(AuthStateLoggedOut());
-        emit(AuthStateNeedsVerification());
+        emit(AuthStateLoggedOut(isLoading: false));
+        emit(AuthStateNeedsVerification(isLoading: false));
       } else {
-        emit(AuthStateLoggedOut());
-        emit(AuthStateLoggedIn(user));
+        emit(AuthStateLoggedOut(isLoading: false));
+        emit(AuthStateLoggedIn(user: user, isLoading: false));
       }
     } on UserNotFoundAuthException {
-      emit(AuthStateLoggedOut(error: "No user found for that email."));
+      emit(AuthStateLoggedOut(
+          error: "No user found for that email.", isLoading: false));
     } on WrongPasswordAuthException {
-      emit(AuthStateLoggedOut(error: "Wrong password provided for that user."));
+      emit(AuthStateLoggedOut(
+          error: "Wrong password provided for that user.", isLoading: false));
     } on GenericAuthException catch (error) {
-      emit(AuthStateLoggedOut(error: error.errorCode));
+      emit(AuthStateLoggedOut(error: error.errorCode, isLoading: false));
     } on Exception catch (_) {
-      emit(AuthStateLoggedOut(error: "Authentication error"));
+      emit(AuthStateLoggedOut(error: "Authentication error", isLoading: false));
     }
   }
 
@@ -72,14 +78,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthEventLogout event,
     Emitter<AuthState> emit,
   ) async {
-    emit(AuthStateUnInitialized());
-
     try {
       await _provider.logout();
 
-      emit(AuthStateLoggedOut());
+      emit(AuthStateLoggedOut(isLoading: false));
     } on Exception catch (error) {
-      emit(AuthStateLoggedOut(error: error.toString()));
+      emit(AuthStateLoggedOut(error: error.toString(), isLoading: false));
     }
   }
 
@@ -109,17 +113,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       await _provider.sendEmailVerification();
 
-      emit(AuthStateLoggedIn(user));
+      emit(AuthStateLoggedIn(user: user, isLoading: false));
     } on InvalidEmailAuthException {
-      emit(AuthStateRegistering(error: "Invalid Email"));
+      emit(AuthStateRegistering(error: "Invalid Email", isLoading: false));
     } on WeakPasswordAuthException {
-      emit(AuthStateRegistering(error: "Weak Password"));
+      emit(AuthStateRegistering(error: "Weak Password", isLoading: false));
     } on EmailAlreadyInUseAuthException {
-      emit(AuthStateRegistering(error: "Email is already in use"));
+      emit(AuthStateRegistering(
+          error: "Email is already in use", isLoading: false));
     } on GenericAuthException catch (error) {
-      emit(AuthStateRegistering(error: error.errorCode));
+      emit(AuthStateRegistering(error: error.errorCode, isLoading: false));
     } on Exception catch (_) {
-      emit(AuthStateRegistering(error: "Authentication error"));
+      emit(AuthStateRegistering(
+          error: "Authentication error", isLoading: false));
     }
   }
 }
